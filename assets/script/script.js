@@ -1,5 +1,4 @@
 const now = moment().format("MMMM Do YYYY, h:mm:ss a");
-// console.log(now);
 $("#currentDay").text(now);
 
 let timeBlocks = [
@@ -14,7 +13,7 @@ let timeBlocks = [
   "5:00 pm",
 ];
 
-var tasks = [{}];
+var tasks = [];
 
 $(".row").innerHTML = "";
 for (i = 0; i < timeBlocks.length; i++) {
@@ -24,10 +23,17 @@ for (i = 0; i < timeBlocks.length; i++) {
     .text(RowHour)
     .appendTo(".row");
   $(
-    `<textarea class="col-8 note-input textarea description pr-3 pt-3 mb-1" id="input-${i}"></textarea>`
+    `<textarea class="${timeBlocks[i].replace(
+      " ",
+      "-"
+    )} col-8 note-input textarea description pr-3 pt-3 mb-1" id="input-${
+      RowHour.split(":")[0]
+    }"></textarea>`
   ).appendTo(".row");
   $(
-    `<button class="col-2 btn btn-primary saveBtn mb-1" id="button-${i}"></button>`
+    `<button class="col-2 btn btn-primary saveBtn mb-1" id="button-${
+      RowHour.split(":")[0]
+    }"></button>`
   )
     .text("SAVE")
     .appendTo(".row");
@@ -38,73 +44,48 @@ var saveTasks = function () {
 };
 
 $(".saveBtn").click(function (e) {
-  let i = this.id.slice(-1);
-
-  let taskTime = timeBlocks[i];
+  let i = this.id.split("-")[1];
   var newTask = $("#input-" + i).val();
-
   tasks.push({
     text: newTask,
-    time: taskTime,
+    time: i,
   });
 
   console.log(tasks);
   saveTasks();
 });
 
-// var loadTasks = function () {
-//   tasks = JSON.parse(localStorage.getItem("tasks"));
+var loadTasks = function () {
+  tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-//   // if nothing in localStorage, create a new object to track all task status arrays
-//   if (!tasks) {
-//     tasks = {
-//       text: "",
-//       time: "",
-//     };
-//   }
-
-//   for (var i = 0; i < timeBlocks.length; i++) {
-//     // console.log(tasks[i].time);
-//     // console.log(JSON.stringify(tasks[i].time));
-//     // console.log(timeBlocks[i]);
-//     // console.log(JSON.stringify(tasks[i].text));
-//     var storeTime = JSON.stringify([i].tasks.time);
-//     var storeText = JSON.stringify([i].tasks.text);
-
-//     if (timeBlocks[i] == storeTime) {
-//       $("#input-" + i).innerText = storeText;
-//     }
-//     //  else {
-//     //   $("#input-" + i).innerText = "";
-//     // }
-//   }
-//   //     if (typeof tasks[i].text === "undefined") {
-// //       i += 1;
-// //     } else {
-// //       var TextAreas = $("#input-" + i);
-// //       //   console.log(TextAreas);
-// //       TextAreas.textContent = tasks[i].text;
-
-// //       i += 1;
-// //     }
-// //   }
-// };
-// loadTasks();
+  for (var i = 0; i < tasks.length; i++) {
+    if (tasks.length == 0) {
+      return;
+    }
+    var storeTime = tasks[i].time;
+    var storeText = tasks[i].text;
+    $("#input-" + storeTime).val(storeText);
+  }
+};
 
 function updateTaskColor() {
   var getCurrentTime = moment(moment().format("H A"), "H A");
-  var testBlock = moment(timeBlocks, "H A");
   var input = $(".note-input");
-  console.log(input);
-
-  // var currTime = moment(currTime[i], "h a");
-  if (getCurrentTime.isSame(testBlock) === true) {
-    input.addClass("present");
-  } else if (getCurrentTime.isBefore(testBlock) === true) {
-    input.addClass("future");
-  } else if (getCurrentTime.isafter(testBlock) === false) {
-    input.addClass("past");
+  for (var i = 0; i < input.length; i++) {
+    var time = input[i].id.split("-")[1];
+    if (time < 9) {
+      time += 12;
+    }
+    time = moment(time, "HH");
+    if (getCurrentTime.isSame(time)) {
+      $(input[i]).addClass("present");
+    } else if (getCurrentTime.isAfter(time)) {
+      $(input[i]).addClass("past");
+    } else {
+      $(input[i]).addClass("future");
+    }
   }
 }
 updateTaskColor();
 setInterval(updateTaskColor, 10000);
+loadTasks();
